@@ -1,12 +1,10 @@
 import 'package:intl/intl.dart';
-import 'package:untitled2/src/Model/DayWeather_Model.dart';
-import 'package:untitled2/src/Model/WeatherJson_Model.dart';
-import 'package:untitled2/src/Weather.dart';
+import 'package:untitled2/src/Model/WeatherModel.dart';
+import 'package:untitled2/src/Repository/WeatherRepo.dart';
 import 'dart:io';
 
 main() async {
-  List<DayWeatherModel> forecastList;
-  Weather weather;
+  WeatherRepo weather;
   DateTime dateTime = DateTime.now();
   String thisYear = dateTime.year.toString();
   String thisMonth = DateFormat("MMMM").format(dateTime).toLowerCase();
@@ -18,6 +16,7 @@ main() async {
   // String country = stdin.readLineSync().toString();
   // print("Please enter city:  ");
   // String city = stdin.readLineSync().toString();
+  // check country and city form list and show alternative;
   print("======================================================\n"
       "Please choose one option:\n"
       "1 =>  Get today's forecasts\n"
@@ -29,12 +28,22 @@ main() async {
     case '1':
       {
         weather =
-            Weather("uzbekistan", "tashkent", thisYear, thisMonth, thisDay);
+            WeatherRepo("uzbekistan", "tashkent", thisYear, thisMonth, thisDay);
+        weather.getOneDay().then((value) => {
+              if (value != null)
+                print(value.toString())
+              else
+                print("File not exists or wring date was entered")
+            });
       }
       break;
     case '2':
       {
-        weather = Weather("uzbekistan", "tashkent", thisYear, thisMonth);
+        weather = WeatherRepo("uzbekistan", "tashkent", thisYear, thisMonth);
+        WeatherModel weatherModel = await weather.getMonthWeather();
+        for (var element in weatherModel.weather) {
+          print(element.toString());
+        }
       }
       break;
     case '3':
@@ -47,10 +56,10 @@ main() async {
         String day = stdin.readLineSync().toString();
         if (day.length < 0) {
           weather =
-              Weather("uzbekistan", "tashkent", year, month.toLowerCase());
+              WeatherRepo("uzbekistan", "tashkent", year, month.toLowerCase());
         } else {
-          weather =
-              Weather("uzbekistan", "tashkent", year, month.toLowerCase(), day);
+          weather = WeatherRepo(
+              "uzbekistan", "tashkent", year, month.toLowerCase(), day);
         }
       }
       break;
@@ -63,19 +72,5 @@ main() async {
         //   break backHere;
         // }
       }
-  }
-
-  String nowDate = DateFormat("dd-MM-yyyy").format(DateTime.now());
-  if (await weather.isDataChanged(nowDate)) {
-    await weather
-        .getWeatherInfo()
-        .then((value) => weather.writeFileAsJson(value, nowDate));
-  } else {
-    List<WeatherJsonBodyModel> localList = await weather.getFormLocalJson();
-    if (localList.isEmpty) {
-      print("There is no information about this date in local date");
-    } else {
-      print(localList.toString());
-    }
   }
 }
