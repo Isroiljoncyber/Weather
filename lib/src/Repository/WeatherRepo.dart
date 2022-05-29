@@ -21,13 +21,46 @@ class WeatherRepo extends ApiService {
       [this._day = ""]);
 
   @override
+  Future<List<WeatherBodyModel>> getWeatherInfo() async {
+    var client = Client();
+    List<WeatherBodyModel> model = [];
+    Response response = await client
+        .get(Uri.parse("$BASE_URI$_coutryName/$_cityName/$_month-$_year/"));
+    if (response.statusCode == 200) {
+      var rows = parse(response.body)
+          .querySelectorAll("ul.ww-month")
+          .first
+          .querySelectorAll("li,li");
+      for (var row in rows) {
+        if (row.attributes.isNotEmpty) {
+          String day = row.querySelectorAll("div").first.text;
+          String disc = row.querySelectorAll("i").first.attributes["title"];
+          String dayTemp = row.querySelectorAll("span").first.text;
+          String nightTemp = row.querySelectorAll("p").first.text;
+          model.add(WeatherBodyModel(
+              title: disc, date: day, tempDay: dayTemp, tempNight: nightTemp));
+        }
+      }
+    } else {
+      throw Exception("We cannot find any info ☹\n"
+          "Status code: ${response.statusCode}\n");
+    }
+    return model;
+  }
+
+  @override
   Future<WeatherModel> getFormLocalJson() async {
     var jsonFile = File('../$_coutryName$_cityName$_year$_month.json');
     final String response = jsonFile.readAsStringSync();
     WeatherModel weatherJsonModel;
     var fileString = await json.decode(response);
     weatherJsonModel = WeatherModel.fromJson(fileString);
-    return weatherJsonModel;
+    if (weatherJsonModel.update.contains(getUpdateDate())) {
+      return weatherJsonModel;
+    } else {
+      await getWeatherInfo().then((value) => {writeFileAsJson(value)});
+      return getFormLocalJson();
+    }
   }
 
   @override
@@ -52,42 +85,21 @@ class WeatherRepo extends ApiService {
   }
 
   @override
-  Future<List<WeatherBodyModel>> getWeatherInfo() async {
-    var client = Client();
-    List<WeatherBodyModel> model = [];
-    Response response = await client
-        .get(Uri.parse("$BASE_URI$_coutryName/$_cityName/$_month-$_year/"));
-    if (response.statusCode == 200) {
-      var rows = parse(response.body)
-          .querySelectorAll("ul.ww-month")
-          .first
-          .querySelectorAll("li,li");
-      for (var row in rows) {
-        if (row.attributes.isNotEmpty) {
-          String day = row.querySelectorAll("div").first.text;
-          String disc = row.querySelectorAll("i").first.attributes["title"];
-          String dayTemp = row.querySelectorAll("span").first.text;
-          String nightTemp = row.querySelectorAll("p").first.text;
-          model.add(WeatherBodyModel(
-              title: disc, date: day, tempDay: dayTemp, tempNight: nightTemp));
-        }
-      }
-    }
-    return model;
-  }
-
-  @override
   writeFileAsJson(List<WeatherBodyModel> list) {
     var jsonFile = File('../$_coutryName$_cityName$_year$_month.json');
-    String update = DateFormat("dd-MM-yyyy").format(DateTime.now());
     if (jsonFile.existsSync()) jsonFile.delete();
     var weatherJson = WeatherModel(
-        update: update,
+        update: getUpdateDate(),
         country: _coutryName,
         city: _cityName,
         month: _month,
         weather: list);
     var jsonString = weatherJson.toJson();
     jsonFile.writeAsStringSync(jsonEncode(jsonString));
+  }
+
+  String getUpdateDate() {
+    String day = DateFormat("dd").format(DateTime.now());
+    return "$day-$_month-$_year";
   }
 }

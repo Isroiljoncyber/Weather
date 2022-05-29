@@ -81,6 +81,12 @@ class WeatherModel {
     }
     return map;
   }
+
+  @override
+  String toString() {
+    return 'Information has been changed on : $_update\n'
+        'Forecast information of $_country, $_city for $_month:';
+  }
 }
 
 /// title : "Преимущественно облачно"
