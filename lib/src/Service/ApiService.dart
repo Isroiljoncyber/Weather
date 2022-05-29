@@ -1,7 +1,9 @@
 //
 import 'dart:io';
 
-import '../Model/WeatherModel.dart';
+import 'package:untitled2/src/Model/Weather_Hourly_Forecast_Model.dart';
+
+import '../Model/Weather_Model.dart';
 
 class ApiService{
 
@@ -11,14 +13,8 @@ class ApiService{
   Future<WeatherModel> getFormLocalJson() {}
   Future<WeatherModel> getMonthWeather() {}
   Future<WeatherBodyModel> getOneDay() {}
-
-  bool isFileExisted(String fileName) {
-    var existedFile = File('../$fileName.json');
-    if (existedFile.existsSync()) {
-      return true;
-    }
-    return false;
-  }
+  Future<List<WeatherHourlyForecastModel>> getHourlyForecast() {}
+  bool isFileExisted(String fileName) {}
 
 
 }

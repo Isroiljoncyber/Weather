@@ -3,12 +3,13 @@ import 'dart:convert';
 import 'package:http/http.dart'; // Contains a client for making API calls
 import 'package:html/parser.dart'; // Contains HTML parsers to generate a Document object
 import 'package:intl/intl.dart';
+import 'package:untitled2/src/Model/Weather_Hourly_Forecast_Model.dart';
 import 'dart:io';
 
-import 'package:untitled2/src/Model/WeatherModel.dart';
+import 'package:untitled2/src/Model/Weather_Model.dart';
 import 'package:untitled2/src/Service/ApiService.dart';
 
-class WeatherRepo extends ApiService {
+class WeatherRepo implements ApiService {
   final BASE_URI = "https://world-weather.ru/pogoda/";
 
   final String _coutryName;
@@ -17,8 +18,8 @@ class WeatherRepo extends ApiService {
   final String _month;
   final String _day;
 
-  WeatherRepo(this._coutryName, this._cityName, this._year, this._month,
-      [this._day = ""]);
+  WeatherRepo(this._coutryName, this._cityName,
+      [this._year, this._month, this._day = ""]);
 
   @override
   Future<List<WeatherBodyModel>> getWeatherInfo() async {
@@ -41,6 +42,60 @@ class WeatherRepo extends ApiService {
               title: disc, date: day, tempDay: dayTemp, tempNight: nightTemp));
         }
       }
+    } else {
+      throw Exception("We cannot find any info ☹\n"
+          "Status code: ${response.statusCode}\n");
+    }
+    return model;
+  }
+
+  @override
+  Future<List<WeatherHourlyForecastModel>> getHourlyForecast() async {
+    var client = Client();
+    List<WeatherHourlyForecastModel> model = [];
+    Response response = await client
+        .get(Uri.parse("$BASE_URI$_coutryName/$_cityName/24hours/"));
+    if (response.statusCode == 200) {
+      var htmlString = parse(response.body);
+      var content = htmlString.querySelectorAll("div")[9];
+      int id = 1;
+      content.querySelectorAll("div.dates").forEach((element) {
+        String day = element.text.replaceAll(",", "");
+        List<HourlyForecast> hourlyList = [];
+        content
+            .querySelectorAll("table.weather-today")[id]
+            .querySelectorAll("tr,tr")
+            .forEach((element) {
+          var row = element.querySelectorAll("td,td");
+          String time = row[0].text;
+          String title =
+              row[1].querySelectorAll("div").first.attributes["title"];
+          String temp = row[2].text;
+          String probab = row[3].text;
+          String pressure = row[4].text;
+          String windDir = row[5]
+              .querySelectorAll("span")
+              .first
+              .attributes['class']
+              .replaceAll("tooltip wwi ", "");
+          String windSpeed =
+              row[5].querySelectorAll("span").last.attributes['title'];
+          String humid = row[6].text;
+          hourlyList.add(HourlyForecast(
+              time: time,
+              temperature: "$title $temp",
+              rainProbability: probab,
+              pressure: pressure,
+              windDirection: windDir,
+              windSpeed: windSpeed,
+              humidity: humid));
+        });
+
+        model.add(WeatherHourlyForecastModel(
+            dayTitle: day, hourlyForecast: hourlyList));
+        id++;
+        print("");
+      });
     } else {
       throw Exception("We cannot find any info ☹\n"
           "Status code: ${response.statusCode}\n");
@@ -101,5 +156,14 @@ class WeatherRepo extends ApiService {
   String getUpdateDate() {
     String day = DateFormat("dd").format(DateTime.now());
     return "$day-$_month-$_year";
+  }
+
+  @override
+  bool isFileExisted(String fileName) {
+    var existedFile = File('../$fileName.json');
+    if (existedFile.existsSync()) {
+      return true;
+    }
+    return false;
   }
 }

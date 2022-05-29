@@ -16,3 +16,4 @@ dependencies:
   http: ^0.13.4
   html: ^0.13.3+3
   intl: ^0.17.0
+  colorize: ^3.0.0
