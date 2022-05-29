@@ -81,7 +81,7 @@ main() async {
         for (var element in hourlyList) {
           Utils.printRedBGWhite(element.toString());
           for(var item in element.hourlyForecast){
-            Utils.printBlackBGYello(item.toString());
+            Utils.printBlackBGYellow(item.toString());
           }
         }} break;
     }

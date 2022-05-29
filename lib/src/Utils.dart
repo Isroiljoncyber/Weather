@@ -7,7 +7,7 @@ class Utils{
     print(colorize.red().bgWhite());
   }
 
-  static printBlackBGYello(String text){
+  static printBlackBGYellow(String text){
     var colorize = Colorize(text);
     print(colorize.bgYellow().white());
   }
