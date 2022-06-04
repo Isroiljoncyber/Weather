@@ -2,7 +2,6 @@ import 'package:intl/intl.dart';
 import 'package:untitled2/src/Model/Weather_Hourly_Forecast_Model.dart';
 import 'package:untitled2/src/Repository/WeatherRepo.dart';
 import 'dart:io';
-
 import 'package:untitled2/src/Utils.dart';
 
 main() async {
